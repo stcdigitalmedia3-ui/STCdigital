@@ -1,0 +1,2266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- PC VIEW ONLY (no mobile responsive layout) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STC Publishing House | Digital Portal</title>
+
+  <!-- Test Paper libs (CDN). Internet needed. If you want fully-offline, download these files and link locally. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --text:#f5f6f7;
+      --muted: rgba(245,246,247,.68);
+      --border: rgba(255,255,255,.10);
+      --accent:#c7ff3a;
+      --accent2:#7c5cff;
+      --accent3:#00d2ff;
+      --container: 1180px;
+
+      --ddBg: rgba(6,7,10,.98);
+      --ddBorder: rgba(255,255,255,.12);
+      --ddItem: rgba(255,255,255,.06);
+      --ddItemHover: rgba(255,255,255,.10);
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    .container{max-width:var(--container);margin:0 auto;padding:0 18px;}
+    section{scroll-margin-top:120px;}
+
+    /* Background */
+    .bg-orbs{position:fixed; inset:0; pointer-events:none; z-index:-1; overflow:hidden;}
+    .orb{
+      position:absolute; width:520px; height:520px; border-radius:50%;
+      filter: blur(55px); opacity:.18;
+      animation: floaty 12s ease-in-out infinite;
+      background: radial-gradient(circle at 30% 30%, var(--accent), transparent 55%);
+    }
+    .orb.o2{width:640px;height:640px;opacity:.14;background: radial-gradient(circle at 35% 35%, var(--accent2), transparent 60%);animation-duration:16s;}
+    .orb.o3{width:560px;height:560px;opacity:.12;background: radial-gradient(circle at 40% 40%, var(--accent3), transparent 60%);animation-duration:19s;}
+    @keyframes floaty{0%,100%{transform: translateY(0) translateX(0) scale(1)}50%{transform: translateY(-18px) translateX(12px) scale(1.03)}}
+
+    /* Topbar */
+    .topbar{
+      position:sticky; top:0; z-index:100;
+      background: rgba(11,12,16,.60);
+      backdrop-filter: blur(14px);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .topbar-inner{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 12px 0; gap:14px;
+    }
+    .brand{display:flex; align-items:center; gap:12px; min-width:260px;}
+    .logo{
+      width:42px;height:42px;border-radius:14px;
+      border:1px solid var(--border);
+      overflow:hidden; background: rgba(255,255,255,.04);
+      display:grid; place-items:center;
+      font-weight:950;
+    }
+    .logo img{width:100%;height:100%;object-fit:cover}
+    .brandtext .name{font-weight:900; letter-spacing:.2px; font-size:14px;}
+    .brandtext .tag{
+      font-size:10px; letter-spacing:1.6px;
+      color: rgba(199,255,58,.95);
+      font-weight:900; margin-top:3px; text-transform:uppercase;
+    }
+
+    /* Professional nav (PC only) */
+    .navrow{
+      flex: 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      min-width: 0;
+    }
+    .navlinks{
+      display:flex; align-items:center; gap:14px;
+      flex-wrap:wrap;
+      justify-content:center;
+      padding: 0;
+      max-width: 720px;
+    }
+    .navlinks a{
+      font-size:12.5px; font-weight:900;
+      color: var(--muted);
+      padding: 8px 6px;
+      border-bottom: 2px solid transparent;
+      transition:.2s;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .navlinks a:hover{color:var(--text)}
+    .navlinks a.active{color:var(--text); border-bottom-color: rgba(245,246,247,.9);}
+
+    /* Global search (top-right) */
+    .top-search{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 340px;
+      justify-content:flex-end;
+    }
+    .searchInput{
+      height: 40px;
+      width: 220px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.05);
+      color: rgba(245,246,247,.92);
+      font-weight: 850;
+      outline: none;
+    }
+    .searchBtn{
+      height: 40px;
+      padding: 0 16px;
+      border-radius: 999px;
+      border:1px solid rgba(199,255,58,.35);
+      background: linear-gradient(90deg, rgba(199,255,58,.95), rgba(0,210,255,.70));
+      color:#07100b;
+      font-weight: 950;
+      cursor:pointer;
+      transition:.2s;
+      white-space:nowrap;
+    }
+    .searchBtn:hover{transform: translateY(-1px);}
+
+    .hero{padding: 56px 0 18px;}
+    .hero h1{
+      font-size: clamp(36px, 4.4vw, 66px);
+      letter-spacing:-0.03em;
+      line-height:1.02;
+      font-weight:950;
+    }
+
+    /* Slider (professional) */
+    .full-bleed{width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);}
+    .slider{padding: 10px 0 56px; border-bottom:1px solid rgba(255,255,255,.08);}
+    .slider-shell{
+      border-radius: 28px; overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      max-width: 1500px;
+      margin: 0 auto;
+      position:relative;
+    }
+    .slider-shell::before{
+      content:""; position:absolute; inset:-60px;
+      background:
+        radial-gradient(circle at 15% 25%, rgba(199,255,58,.18), transparent 55%),
+        radial-gradient(circle at 80% 25%, rgba(0,210,255,.14), transparent 55%),
+        radial-gradient(circle at 60% 85%, rgba(124,92,255,.14), transparent 60%);
+      pointer-events:none;
+    }
+    .slides{display:flex; transition: transform .7s cubic-bezier(.2,.9,.2,1); position:relative;}
+    .slide{min-width:100%; padding: 50px 18px;}
+    .slide-inner{
+      max-width: var(--container);
+      margin: 0 auto;
+      padding: 0 18px;
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 26px;
+      align-items:center;
+      position:relative;
+    }
+    .slide h2{
+      font-size: clamp(26px, 3.1vw, 46px);
+      letter-spacing:-.03em;
+      line-height:1.04;
+      font-weight:950;
+      margin-bottom: 12px;
+    }
+    .slide ul{margin-left: 18px; color: var(--muted); font-size: 15px; line-height:1.9}
+    .slide li{margin: 8px 0;}
+    .cover{
+      border-radius: 22px;
+      border:1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+      background: rgba(0,0,0,.18);
+      box-shadow: 0 20px 70px rgba(0,0,0,.45);
+    }
+    .cover img{width:100%; height: 520px; object-fit: cover; opacity:.95}
+    .dots{display:flex; gap:10px; justify-content:center; margin-top: 18px;}
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
+      transition:.2s;
+    }
+    .dot.active{background: rgba(245,246,247,.92); border-color: rgba(245,246,247,.92);}
+
+    /* Panels */
+    .hidden-section{display:none; padding: 46px 0 70px;}
+    .panel{
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: 0 22px 90px rgba(0,0,0,.45);
+      max-width: var(--container);
+      margin: 0 auto;
+    }
+    .panel-top{display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+    .panel-title{font-weight:950; font-size:18px;}
+    .panel-note{margin-top:6px; color:var(--muted); font-size:14px; line-height:1.75}
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      gap:10px;
+      padding: 11px 14px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font-weight: 900;
+      font-size: 12.5px;
+      letter-spacing: .2px;
+      transition: .2s;
+      cursor:pointer;
+      user-select:none;
+    }
+    .btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.22);}
+    .btn.primary{
+      background: linear-gradient(90deg, rgba(199,255,58,.95), rgba(0,210,255,.72));
+      color:#07100b;
+      border-color: rgba(255,255,255,.18);
+    }
+    .btn.ghost{background: rgba(255,255,255,.03);}
+    .btn.small{padding:9px 12px; font-size:12px;}
+    .btn[disabled]{opacity:.5; cursor:not-allowed; transform:none;}
+
+    .subtabs{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;}
+
+    .card{
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 20px;
+      padding: 16px;
+      position:relative;
+      overflow:hidden;
+    }
+    .card h4{font-weight:900;font-size:15px;}
+    .card p{margin-top:8px;color:var(--muted);font-size:13.5px;line-height:1.75}
+
+    .list{margin-top:14px; display:grid; gap:10px;}
+    .row{
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .row .t{font-weight:900; font-size:13.5px;}
+    .row .s{color:var(--muted); font-size:12.5px; margin-top:4px;}
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .pillbtn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.04);
+      color: rgba(245,246,247,.92);
+      font-weight: 950;
+      font-size: 12px;
+      cursor:pointer;
+      transition:.2s;
+      white-space:nowrap;
+    }
+    .pillbtn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.25);}
+    .pillbtn.primary{
+      background: linear-gradient(90deg, rgba(199,255,58,.95), rgba(0,210,255,.70));
+      color:#07100b;
+      border-color: rgba(255,255,255,.18);
+    }
+    .pillbtn .dot{
+      width:8px;height:8px;border-radius:99px;
+      border:0;
+      background: rgba(245,246,247,.45);
+    }
+    .pillbtn.primary .dot{background: rgba(7,16,11,.45);}
+
+    /* Activity dropdown */
+    .act-dd{position:relative;}
+    .act-menu{
+      position:absolute;
+      right:0;
+      top: calc(100% + 8px);
+      min-width: 240px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(6,7,10,.97);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 24px 90px rgba(0,0,0,.70);
+      overflow:hidden;
+      display:none;
+      z-index: 500;
+    }
+    .act-dd.open .act-menu{display:block;}
+    .act-item{
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      font-weight: 950;
+      font-size: 12.5px;
+      color: rgba(245,246,247,.92);
+      background: transparent;
+      transition: .15s;
+    }
+    .act-item:hover{background: rgba(255,255,255,.08);}
+    .act-sub{
+      font-size: 11.5px;
+      color: rgba(245,246,247,.60);
+      font-weight: 850;
+    }
+    .act-line{height:1px;background: rgba(255,255,255,.10);}
+
+    /* Video box */
+    #videoBox{display:none; margin-top:14px;}
+    .iframeWrap{
+      margin-top:10px;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+    }
+    iframe{width:100%; height: 420px; border:0;}
+
+    footer{
+      border-top:1px solid rgba(255,255,255,.08);
+      padding: 26px 0;
+      color: rgba(245,246,247,.55);
+      font-size: 13px;
+    }
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(6,7,10,.96);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(18px);
+      color: rgba(245,246,247,.92);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-weight: 950;
+      font-size: 12.5px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.55);
+      opacity: 0;
+      pointer-events: none;
+      transition: .25s;
+      z-index: 9999;
+      max-width: calc(100vw - 32px);
+      text-align:center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toast.show{opacity: 1;}
+
+    /* ----------------- TEST PAPER ----------------- */
+    .tp-shell{
+      margin-top: 14px;
+      border-radius: 22px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      overflow:hidden;
+    }
+    .tp-toolbar{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10,11,16,.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      padding: 14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .tp-group{display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+    .tp-input, .tp-select{
+      height: 42px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: rgba(245,246,247,.92);
+      font-weight: 900;
+      font-size: 12.5px;
+      outline: none;
+    }
+    .tp-select{cursor:pointer; appearance:auto;}
+    .tp-select option{background: #0b0c10; color: #f5f6f7;}
+
+    .tp-btn{
+      height: 42px;
+      padding: 0 16px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: rgba(245,246,247,.92);
+      font-weight: 950;
+      font-size: 12px;
+      cursor:pointer;
+      transition:.2s;
+      white-space:nowrap;
+    }
+    .tp-btn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.22);}
+    .tp-btn.primary{background: linear-gradient(90deg, rgba(124,92,255,.95), rgba(0,210,255,.65)); color:#07100b; border-color: rgba(255,255,255,.18);}
+    .tp-btn.good{background: linear-gradient(90deg, rgba(199,255,58,.92), rgba(0,210,255,.55)); color:#07100b;}
+    .tp-btn.red{background: rgba(239,68,68,.85); border-color: rgba(239,68,68,.35);}
+    .tp-btn.blue{background: rgba(37,99,235,.85); border-color: rgba(37,99,235,.35);}
+    .tp-btn.gray{background: rgba(148,163,184,.22);}
+
+    .tp-grid{
+      display:grid;
+      grid-template-columns: 260px 360px 1fr;
+      gap: 14px;
+      padding: 14px;
+      align-items: start;
+    }
+    .tp-col{
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      overflow:hidden;
+      min-height: 520px;
+    }
+    .tp-col-head{
+      padding: 12px 12px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      font-weight: 950;
+      color: rgba(245,246,247,.88);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .tp-col-body{
+      padding: 12px;
+      max-height: 680px;
+      overflow:auto;
+    }
+    .tp-item{
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      border-left: 4px solid rgba(124,92,255,.85);
+      border-radius: 14px;
+      padding: 10px 10px;
+      margin-bottom: 10px;
+      cursor:pointer;
+      transition:.15s;
+    }
+    .tp-item:hover{background: rgba(255,255,255,.07);}
+    .tp-item b{font-size:12px;}
+    .tp-item .sub{color: rgba(245,246,247,.60); font-size:11.5px; margin-top:4px; line-height:1.5;}
+
+    .tp-paperWrap{
+      background: rgba(100,116,139,.14);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      overflow:auto;
+      max-height: 760px;
+      padding: 14px;
+    }
+    .tp-paperStage{
+      transform-origin: top left;
+      will-change: transform;
+      display:inline-block;
+    }
+    .tp-paper{
+      background:#fff;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 18mm;
+      color:#000;
+      border-radius: 12px;
+      box-shadow: 0 0 30px rgba(0,0,0,.45);
+      margin: 0;
+    }
+    .tp-paper-header{
+      text-align:center;
+      border: 2.5px solid #000;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .tp-paper-header h1{margin:0; font-size:22px;}
+    .tp-paper-header p{margin:6px 0 0; font-weight:900; font-size:14px;}
+    .tp-meta-line{
+      display:flex;
+      justify-content:space-between;
+      border-top:2px solid #000;
+      margin-top:10px;
+      padding-top:10px;
+      font-weight:900;
+      font-size:12.5px;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .tp-sec-head{
+      background:#f3f4f6;
+      padding: 10px 12px;
+      font-weight: 950;
+      border: 1.5px solid #000;
+      margin: 18px 0 10px 0;
+      text-transform: uppercase;
+      border-radius: 10px;
+    }
+    .tp-q{
+      position: relative;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+      page-break-inside: avoid !important;
+    }
+    .tp-del{
+      position:absolute;
+      right: -6px;
+      top: 8px;
+      color:#ef4444;
+      font-weight: 950;
+      cursor:pointer;
+      user-select:none;
+      font-size: 16px;
+    }
+    .tp-marksSel{
+      height: 28px;
+      border:1px solid rgba(0,0,0,.25);
+      border-radius: 8px;
+      padding: 0 8px;
+      font-weight: 900;
+      outline: none;
+      background:#fff;
+      color:#000;
+    }
+    .tp-inline-box{
+      display:inline-block;
+      width: 15px;
+      height: 15px;
+      border: 1.5px solid #000;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .tp-opts{
+      margin: 8px 0 0 18px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+      font-size: 13px;
+    }
+
+    /* ANSWER DISPLAY + MASKING FIX */
+    .tp-ans{
+      display:none;
+      color:#059669;
+      font-weight:900;
+      margin-top: 6px;
+      font-size: 12.5px;
+    }
+    .teacher-mode .tp-ans{display:block;}
+    .mask-mode .tp-ans{display:none !important;} /* Masking ON => answers hidden always */
+
+    .tp-bankSearch{
+      display:flex; gap:10px; flex-wrap:wrap;
+      align-items:center;
+    }
+    .tp-mini{
+      height: 36px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: rgba(245,246,247,.92);
+      font-weight: 900;
+      font-size: 12px;
+      outline: none;
+    }
+    .tp-mini option{background:#0b0c10;color:#f5f6f7;}
+
+    /* ===========================
+       RESPONSIVE PATCH (ALL DEVICES)
+       =========================== */
+    html, body { max-width: 100%; overflow-x: hidden; }
+    button, .btn, .pillbtn, .tp-btn { touch-action: manipulation; }
+
+    @media (max-width: 980px){
+      .topbar-inner{ flex-wrap: wrap; gap: 10px; }
+      .brand{ min-width: 0; flex: 1 1 100%; justify-content: center; text-align: center; }
+      .navrow{ flex: 1 1 100%; order: 3; }
+      .top-search{ flex: 1 1 100%; order: 2; min-width: 0; justify-content: center; }
+      .searchInput{ width: min(560px, 86vw); }
+      .navlinks{
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        justify-content: flex-start;
+        padding: 2px 4px;
+        gap: 10px;
+        flex-wrap: nowrap;
+      }
+      .navlinks::-webkit-scrollbar{ height: 6px; }
+      .navlinks::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.10); border-radius: 999px; }
+
+      .tp-toolbar{ position: static; top:auto; }
+      .tp-grid{ grid-template-columns: 1fr; }
+      .tp-col{ min-height: auto; }
+      .tp-col-body{ max-height: 260px; }
+      .tp-paperWrap{ max-height: none; }
+
+      .act-menu{
+        position: fixed;
+        right: 14px;
+        left: 14px;
+        top: auto;
+        bottom: 14px;
+        min-width: auto;
+        max-height: 55vh;
+        overflow: auto;
+      }
+    }
+
+    @media (max-width: 920px){
+      .hero{ padding: 38px 0 10px; }
+      .slide{ padding: 34px 12px; }
+      .slide-inner{ grid-template-columns: 1fr; gap: 16px; }
+      .cover img{ height: 360px; }
+    }
+
+    @media (max-width: 700px){
+      .panel{ padding: 14px; border-radius: 18px; }
+      .row{ padding: 10px; border-radius: 14px; }
+      .panel-top{ gap: 10px; }
+      iframe{ height: 280px; }
+    }
+
+    @media (max-width: 520px){
+      .brandtext .name{ font-size: 13px; }
+      .brandtext .tag{ letter-spacing: 1.2px; }
+      .searchInput{ width: min(520px, 92vw); }
+      .searchBtn{ padding: 0 14px; }
+
+      .cover img{ height: 260px; }
+      .slide ul{ font-size: 14px; line-height: 1.75; }
+
+      .tp-btn, .tp-select, .tp-input{ width: 100%; }
+      .tp-group{ width: 100%; }
+      .tp-bankSearch{ width: 100%; }
+      #tpQSearch{ width: 100% !important; }
+    }
+
+    @media (max-width: 1200px){
+      .tp-grid{ grid-template-columns: 240px 320px 1fr; }
+    }
+  
+    /* ----------------- MOBILE NAV DROPDOWN (All devices friendly) ----------------- */
+    .menuWrap{position:relative; display:none;}
+    .menuBtn{
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: rgba(245,246,247,.92);
+      font-weight: 950;
+      cursor:pointer;
+      transition:.2s;
+      white-space:nowrap;
+    }
+    .menuBtn:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.24);}
+    .menuDropdown{
+      position:absolute;
+      right:0;
+      top: calc(100% + 10px);
+      width: 220px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(6,7,10,.98);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 24px 90px rgba(0,0,0,.70);
+      overflow:hidden;
+      display:none;
+      z-index: 600;
+    }
+    .menuWrap.open .menuDropdown{display:block;}
+    .menuDropdown button{
+      width:100%;
+      text-align:left;
+      padding: 12px 12px;
+      background: transparent;
+      border:0;
+      color: rgba(245,246,247,.92);
+      font-weight: 950;
+      font-size: 12.5px;
+      cursor:pointer;
+      transition:.15s;
+    }
+    .menuDropdown button:hover{background: rgba(255,255,255,.08);}
+    .menuLine{height:1px;background: rgba(255,255,255,.10);}
+
+    /* Make logo a bit more to the side (left) */
+    .brand{padding-left: 10px;}
+
+    /* Responsive layout */
+    @media (max-width: 980px){
+      .topbar-inner{flex-direction:column; align-items:stretch;}
+      .brand{min-width:0; justify-content:flex-start;}
+      .navrow{display:none;}             /* hide desktop nav */
+      .menuWrap{display:block;}          /* show dropdown menu */
+
+      .top-search{
+        min-width:0;
+        width:100%;
+        justify-content:flex-start;
+        flex-wrap:wrap;
+      }
+      .searchInput{flex:1 1 220px; width:auto;}
+      .searchBtn{flex:0 0 auto;}
+      .menuWrap{flex:0 0 auto;}
+
+      /* TEST PAPER: stack columns on mobile */
+      .tp-grid{grid-template-columns: 1fr;}
+      .tp-col{min-height: auto;}
+      .tp-col-body{max-height: 320px;}
+      .tp-paperWrap{max-height: none;}
+      iframe{height: 300px;}
+    }
+
+    /* Slightly tighter on very small screens */
+    @media (max-width: 520px){
+      .searchBtn{padding: 0 12px;}
+      .menuBtn{padding: 0 12px;}
+      .tp-toolbar{gap:10px;}
+      .tp-input, .tp-select, .tp-btn{height: 40px;}
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb" style="left:-140px; top:-140px;"></div>
+    <div class="orb o2" style="right:-220px; top:120px;"></div>
+    <div class="orb o3" style="left:25%; bottom:-220px;"></div>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+
+  <div class="topbar">
+    <div class="container">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="logo">
+            <img src="assets/logo.png" alt="STC Logo"
+                 onerror="this.style.display='none'; this.parentElement.textContent='STC';">
+          </div>
+          <div class="brandtext">
+            <div class="name">STC Publishing House</div>
+            <div class="tag">Leading In Education</div>
+          </div>
+        </div>
+
+        <div class="navrow">
+          <nav class="navlinks" aria-label="Primary navigation">
+            <a data-tab="home" class="active">Home</a>
+            <a data-tab="digital">Digital Content</a>
+            <a data-tab="answerkey">Answer Key</a>
+            <a data-tab="trm">TRM</a>
+            <a data-tab="worksheet">Worksheet</a>
+            <a data-tab="testpaper">Test Paper</a>
+            <a data-tab="ukg">UKG</a>
+            <a data-tab="lkg">LKG</a>
+            <a data-tab="nursery">Nursery</a>
+            <a data-tab="contact">Contact</a>
+          </nav>
+        </div>
+
+        <!-- Global Search -->
+        <div class="top-search">
+          <input id="globalSearch" class="searchInput" placeholder="Search (chapter / question)..." />
+          <button class="searchBtn" onclick="doGlobalSearch()">Search</button>
+
+          <div class="menuWrap" id="menuWrap">
+            <button class="menuBtn" id="menuBtn" type="button" aria-haspopup="true" aria-expanded="false">Menu ▾</button>
+            <div class="menuDropdown" id="menuDropdown" role="menu" aria-label="Navigation menu">
+              <button type="button" data-tab="home">Home</button>
+              <button type="button" data-tab="digital">Digital Content</button>
+              <button type="button" data-tab="answerkey">Answer Key</button>
+              <button type="button" data-tab="trm">TRM</button>
+              <button type="button" data-tab="worksheet">Worksheet</button>
+              <button type="button" data-tab="testpaper">Test Paper</button>
+              <div class="menuLine"></div>
+              <button type="button" data-tab="ukg">UKG</button>
+              <button type="button" data-tab="lkg">LKG</button>
+              <button type="button" data-tab="nursery">Nursery</button>
+              <div class="menuLine"></div>
+              <button type="button" data-tab="contact">Contact</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="hero">
+    <div class="container">
+      <h1>STC Publishing House</h1>
+    </div>
+  </section>
+
+  <section class="slider full-bleed" aria-label="Highlights slider">
+    <div class="slider-shell">
+      <div class="slides" id="slides">
+        <div class="slide">
+          <div class="slide-inner">
+            <div>
+              <h2>Digital Content for Classrooms</h2>
+              <ul>
+                <li>Books / Series → Class wise</li>
+                <li>Subject wise chapters</li>
+                <li>Video + Activity support</li>
+                <li>Fast & simple navigation</li>
+              </ul>
+            </div>
+            <div class="cover">
+              <img src="assets/Book-image.png" alt="Cover Sample A">
+            </div>
+          </div>
+        </div>
+
+        <div class="slide">
+          <div class="slide-inner">
+            <div>
+              <h2>Worksheets, TRM & Answer Keys</h2>
+              <ul>
+                <li>Class wise, one click open</li>
+                <li>Google Drive links supported</li>
+                <li>Teacher friendly</li>
+              </ul>
+            </div>
+            <div class="cover">
+              <img src="assets/Hindi-ReaderBook-2.png" alt="Cover Sample B">
+            </div>
+          </div>
+        </div>
+
+        <div class="slide">
+          <div class="slide-inner">
+            <div>
+              <h2>Test Paper Generator</h2>
+              <ul>
+                <li>Book → Class → Subject → Chapter</li>
+                <li>Question bank + Search + Filter</li>
+                <li>Generate + PDF/Word</li>
+              </ul>
+            </div>
+            <div class="cover">
+              <img src="assets/Hindi-ReaderBook-3.png" alt="Cover Sample C">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dots" id="dots" aria-label="Slider dots"></div>
+  </section>
+
+  <!-- DIGITAL -->
+  <section id="digital" class="hidden-section">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-top">
+          <div>
+            <div class="panel-title">Digital Content</div>
+            <div class="panel-note">First select Series → Class → Subject → Chapter.</div>
+          </div>
+          <button class="btn ghost" onclick="hideAll()">Close</button>
+        </div>
+
+        <div class="subtabs" id="seriesChips"></div>
+        <div class="subtabs" id="bookChips"></div>
+
+        <div id="chaptersWrap" style="display:none;">
+          <div class="panel-top" style="margin-top:14px;">
+            <div>
+              <div id="chapTitle" class="panel-title" style="font-size:16px;">Chapters</div>
+              <div class="panel-note">Select Subject → then Chapter list.</div>
+            </div>
+            <button class="btn ghost btn.small" id="bookBackBtn">Back</button>
+          </div>
+
+          <div class="subtabs" id="subjectTabs"></div>
+
+          <div class="list" id="chapterList"></div>
+        </div>
+
+        <div id="videosWrap" style="display:none;">
+          <div class="panel-top" style="margin-top:14px;">
+            <div>
+              <div id="videoListTitle" class="panel-title" style="font-size:16px;">Videos</div>
+              <div class="panel-note">Play video here. If embed error, Open on YouTube.</div>
+            </div>
+            <button class="btn ghost btn.small" id="chapBackBtn">Back</button>
+          </div>
+
+          <div class="list" id="videoList"></div>
+
+          <div id="videoBox">
+            <div class="panel-top" style="margin-top:14px;">
+              <div>
+                <div id="videoTitle" class="panel-title" style="font-size:16px;">Video</div>
+                <div class="panel-note">Agar embed error aaye to “Open on YouTube” use karein.</div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <a class="btn primary btn.small" id="openOnYt" href="#" target="_blank" rel="noopener">Open on YouTube</a>
+                <button class="btn ghost btn.small" type="button" onclick="stopVideo()">Hide Video</button>
+              </div>
+            </div>
+            <div class="iframeWrap">
+              <iframe id="ytFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ANSWER KEY -->
+  <section id="answerkey" class="hidden-section">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-top">
+          <div>
+            <div class="panel-title">Answer Key</div>
+            <div class="panel-note">Series select karo → Class select karo → Open.</div>
+          </div>
+          <button class="btn ghost" onclick="hideAll()">Close</button>
+        </div>
+        <div class="subtabs" id="akSeries"></div>
+        <div class="subtabs" id="akChips"></div>
+        <div class="list" id="akList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRM -->
+  <section id="trm" class="hidden-section">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-top">
+          <div>
+            <div class="panel-title">TRM</div>
+            <div class="panel-note">Series select karo → Class select karo → Open.</div>
+          </div>
+          <button class="btn ghost" onclick="hideAll()">Close</button>
+        </div>
+        <div class="subtabs" id="trmSeries"></div>
+        <div class="subtabs" id="trmChips"></div>
+        <div class="list" id="trmList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKSHEET -->
+  <section id="worksheet" class="hidden-section">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-top">
+          <div>
+            <div class="panel-title">Worksheet</div>
+            <div class="panel-note">Series select karo → Class select karo → Open.</div>
+          </div>
+          <button class="btn ghost" onclick="hideAll()">Close</button>
+        </div>
+        <div class="subtabs" id="wsSeries"></div>
+        <div class="subtabs" id="wsChips"></div>
+        <div class="list" id="wsList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEST PAPER -->
+  <section id="testpaper" class="hidden-section">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-top">
+          <div>
+            <div class="panel-title">Test Paper</div>
+            <div class="panel-note">Book-wise → Class-wise → Subject-wise → Chapter-wise question bank.</div>
+          </div>
+          <button class="btn ghost" onclick="hideAll()">Close</button>
+        </div>
+
+        <div class="tp-shell">
+          <div class="tp-toolbar">
+            <div class="tp-group">
+              <button id="tpTeacherBtn" class="tp-btn good" onclick="tpToggleTeacher()">TEACHER MODE: OFF</button>
+              <button id="tpMaskBtn" class="tp-btn gray" onclick="tpToggleMask()">MASKING: OFF</button>
+
+              <select id="tpBookSel" class="tp-select"></select>
+              <select id="tpClassSel" class="tp-select"></select>
+              <select id="tpSubSel" class="tp-select"></select>
+
+              <select id="tpPreset" class="tp-select">
+                <option value="">PRESETS</option>
+                <option value="1-4">TERM 1 (1-4)</option>
+                <option value="5-8">TERM 2 (5-8)</option>
+                <option value="1-11">FULL EXAM</option>
+              </select>
+
+              <input id="tpRange" class="tp-input" placeholder="RANGE e.g. 1-1" style="width:120px" />
+              <button class="tp-btn primary" onclick="tpGenerateFromRange()">GENERATE (ALL)</button>
+            </div>
+
+            <div class="tp-group">
+              <div class="tp-bankSearch">
+                <input id="tpQSearch" class="tp-mini" placeholder="Search question..." style="width:190px" />
+                <select id="tpTypeFilter" class="tp-mini">
+                  <option value="">All Types</option>
+                  <option value="MCQ">MCQ</option>
+                  <option value="TF">TF</option>
+                  <option value="Fill">Fill</option>
+                  <option value="Short">Short</option>
+                  <option value="Long">Long</option>
+                </select>
+                <button class="tp-btn" onclick="tpApplyBankFilter()">Apply</button>
+              </div>
+
+              <button id="tpPdfBtn" class="tp-btn red" onclick="tpSavePDF()">PDF</button>
+              <button class="tp-btn blue" onclick="tpSaveWord()">WORD</button>
+              <button class="tp-btn gray" onclick="tpClear()">CLEAR</button>
+            </div>
+          </div>
+
+          <div class="tp-grid">
+            <div class="tp-col">
+              <div class="tp-col-head">📁 Chapters</div>
+              <div class="tp-col-body" id="tpChapters"></div>
+            </div>
+
+            <div class="tp-col">
+              <div class="tp-col-head" id="tpBankTitle">Pick Questions</div>
+              <div class="tp-col-body" id="tpBank"></div>
+            </div>
+
+            <div class="tp-paperWrap" id="tpPaperWrap">
+              <div class="tp-paperStage" id="tpPaperStage">
+                <div class="tp-paper" id="tpPaper">
+                  <div class="tp-paper-header">
+                    <h1 contenteditable="true">SHREE VIDYA PUBLIC SCHOOL</h1>
+                    <p contenteditable="true">ANNUAL EXAMINATION 2025-26</p>
+                    <div class="tp-meta-line">
+                      <span>Subject: <span id="tpPaperSubject" contenteditable="true">General Knowledge</span></span>
+                      <span>Time: <span contenteditable="true">2 Hours</span></span>
+                      <span>Max Marks: <span id="tpTotal">0</span></span>
+                    </div>
+                  </div>
+                  <div id="tpPaperBody"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- UKG/LKG/NURSERY -->
+  <section id="ukg" class="hidden-section">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-top">
+          <div><div class="panel-title">UKG</div><div class="panel-note">Videos / Activity / Worksheet</div></div>
+          <button class="btn ghost" onclick="hideAll()">Close</button>
+        </div>
+        <div class="subtabs" style="margin-top:14px;">
+          <button class="btn primary" onclick="openKinder('ukg','videos')">Videos</button>
+          <button class="btn ghost" onclick="openKinder('ukg','activity')">Activity</button>
+          <button class="btn ghost" onclick="openKinder('ukg','worksheet')">Worksheet</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="lkg" class="hidden-section">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-top">
+          <div><div class="panel-title">LKG</div><div class="panel-note">Videos / Activity / Worksheet</div></div>
+          <button class="btn ghost" onclick="hideAll()">Close</button>
+        </div>
+        <div class="subtabs" style="margin-top:14px;">
+          <button class="btn primary" onclick="openKinder('lkg','videos')">Videos</button>
+          <button class="btn ghost" onclick="openKinder('lkg','activity')">Activity</button>
+          <button class="btn ghost" onclick="openKinder('lkg','worksheet')">Worksheet</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="nursery" class="hidden-section">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-top">
+          <div><div class="panel-title">Nursery</div><div class="panel-note">Videos / Activity / Worksheet</div></div>
+          <button class="btn ghost" onclick="hideAll()">Close</button>
+        </div>
+        <div class="subtabs" style="margin-top:14px;">
+          <button class="btn primary" onclick="openKinder('nursery','videos')">Videos</button>
+          <button class="btn ghost" onclick="openKinder('nursery','activity')">Activity</button>
+          <button class="btn ghost" onclick="openKinder('nursery','worksheet')">Worksheet</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" class="hidden-section">
+    <div class="container">
+      <div class="panel">
+        <div class="panel-top">
+          <div>
+            <div class="panel-title">Contact</div>
+            <div class="panel-note">Partnerships, bulk orders or sample requests.</div>
+          </div>
+          <button class="btn ghost" onclick="hideAll()">Close</button>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h4 style="font-size:16px;font-weight:950;margin-bottom:10px;">Business Details</h4>
+          <p style="color:var(--muted);font-size:14px;line-height:1.9">
+            <b style="color:var(--text)">STC Publishing House</b><br/>
+            Email: <a href="mailto:stcpublishinghouse@gmail.com" style="color:rgba(199,255,58,.95);font-weight:850">stcpublishinghouse@gmail.com</a><br/>
+            Phone: <a href="tel:+911204356124" style="color:rgba(0,210,255,.9);font-weight:850">0120 435 6124</a><br/>
+            Address: B-21 Sector-57, Noida, UP 201301
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">© <span id="year"></span> STC Publishing House • All Rights Reserved</div>
+  </footer>
+
+  <script>
+    let toastTimer = null;
+    function toast(msg){
+      const toastEl = document.getElementById('toast');
+      if(!toastEl) return;
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> toastEl.classList.remove('show'), 1600);
+    }
+
+    function bindNav(){
+      document.querySelectorAll('.navlinks a').forEach(a=>{
+        if(a.dataset.bound) return;
+        a.dataset.bound = "1";
+        a.addEventListener('click', ()=> handleTab(a.getAttribute('data-tab')));
+      });
+    }
+
+    function boot(){
+      const yearEl = document.getElementById('year');
+      if(yearEl) yearEl.textContent = new Date().getFullYear();
+      const sliderShell = document.querySelector('.slider-shell');
+      if(sliderShell && !sliderShell.dataset.bound){
+        sliderShell.dataset.bound = "1";
+        sliderShell.addEventListener('mouseenter', ()=> clearInterval(timer));
+        sliderShell.addEventListener('mouseleave', ()=> restartSlider());
+      }
+
+      bindNav();
+      hideAll();
+    }
+
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', boot);
+    }else{
+      boot();
+    }
+
+    /* Slider */
+
+    const slides = document.getElementById('slides');
+    const totalSlides = slides ? slides.children.length : 0;
+    const dotsWrap = document.getElementById('dots');
+    let slideIdx = 0, timer = null;
+
+    function buildDots(){
+      if(!dotsWrap || !totalSlides) return;
+      dotsWrap.innerHTML = '';
+      for(let i=0;i<totalSlides;i++){
+        const d = document.createElement('div');
+        d.className = 'dot' + (i===0 ? ' active' : '');
+        d.addEventListener('click', ()=>goSlide(i,true));
+        dotsWrap.appendChild(d);
+      }
+    }
+    function setDots(){
+      const dots = dotsWrap.querySelectorAll('.dot');
+      dots.forEach((d,i)=> d.classList.toggle('active', i===slideIdx));
+    }
+    function goSlide(i, user=false){
+      slideIdx = (i + totalSlides) % totalSlides;
+      slides.style.transform = `translateX(-${slideIdx*100}%)`;
+      setDots();
+      if(user) restartSlider();
+    }
+    function nextSlide(){ goSlide(slideIdx+1); }
+    function startSlider(){ if(!totalSlides) return; timer=setInterval(nextSlide, 5200); }
+    function restartSlider(){ clearInterval(timer); startSlider(); }
+    /* YouTube embed */
+    function buildYouTubeEmbed(url){
+      try{
+        url = (url || '').toString().trim().replace(/\s+/g,'');
+        const u = new URL(url);
+        const v = u.searchParams.get('v');
+        if(!v) return "";
+        const embed = `https://www.youtube-n` + `ocookie.com/embed/${v}`;
+        const params = new URLSearchParams();
+        params.set('rel','0');
+        params.set('modestbranding','1');
+        params.set('autoplay','1');
+        return embed + "?" + params.toString();
+      }catch(e){ return ""; }
+    }
+
+    /* -------------------- DATA -------------------- */
+    const SERIES = [
+      { id: "kiara", name: "Kiara Hindi Reader" },
+      { id: "meadows", name: "Meadows Semester Book" }
+    ];
+
+    const SERIES_CLASSES = {
+      kiara: ["1","2","3","4","5","6","7","8"],
+      meadows: ["1"]
+    };
+
+    const CLASS_COVERS = {
+      kiara: {
+        "1":"assets/Hindi-ReaderBook-1.png",
+        "2":"assets/Hindi-ReaderBook-2.png",
+        "3":"assets/Hindi-ReaderBook-3.png",
+        "4":"assets/Book-image.png",
+        "5":"assets/Book-image.png",
+        "6":"assets/Book-image.png",
+        "7":"assets/Book-image.png",
+        "8":"assets/Book-image.png"
+      },
+      meadows: {
+        "1":"assets/meadows_class1.jpg"
+      }
+    };
+
+    const SUBJECT_COVERS = {
+      kiara: { "Hindi Reader":"assets/Hindi-ReaderBook-1.png" },
+      meadows: { "Meadows":"assets/meadows_class1.jpg" }
+    };
+
+    const LINKS = {
+      worksheet: {
+        kiara: {
+          "1":"https://drive.google.com/file/d/1-GxSxeCjQUIw4RDXiwxWS8IuqqAx5dfK/view?usp=sharing",
+          "2":"https://drive.google.com/file/d/1jPLgZf4J_M0F-JfWftfkDCR4oJH6OCmf/view?usp=sharing",
+          "3":"https://drive.google.com/file/d/1fcvJAQO6CQsxkJI4b27UtU85Gdjrzhup/view?usp=drive_link",
+          "4":"","5":"","6":"","7":"","8":""
+        },
+        meadows: {
+          "1":"https://drive.google.com/file/d/1xwvWZHTWsegch6QSwnCYUexgEnzVzYUM/view?usp=drive_link"
+        }
+      },
+      answerkey: {
+        kiara: {
+          "1":"https://drive.google.com/file/d/1QEk0WkDKXGfyRLjniahtvkFu4vblf6DI/view?usp=drive_link",
+          "2":"https://drive.google.com/file/d/1sQDYbet2WAP0MrzyDeiWTzjco2UPIA4W/view?usp=drive_link",
+          "3":"https://drive.google.com/file/d/1NAJEqRBwVBrX_iyZKBLNXxWLUw-PNkUn/view?usp=drive_link",
+          "4":"","5":"","6":"","7":"","8":""
+        },
+        meadows: {
+          "1":"https://drive.google.com/file/d/1uGbUYR_GAPwn-L7QfySO_GYVVqkmBDYZ/view?usp=drive_link"
+        }
+      },
+      trm: {
+        kiara: {
+          "1":"https://drive.google.com/file/d/12Gz9sL3H9ITAu-kAmfqK9u6ynh_odnpA/view?usp=drive_link",
+          "2":"https://drive.google.com/file/d/1dayhRr7lNr49A1JypXtvA_92Ndnsnlc4/view?usp=drive_link",
+          "3":"https://drive.google.com/file/d/1g92QZvbJcLiy73FRTZUZE5nJBq0e_7rQ/view?usp=drive_link",
+          "4":"","5":"","6":"","7":"","8":""
+        },
+        meadows: {
+          "1":"https://drive.google.com/file/d/1KLQp_62liy5jqZMCzse9UtotoapYeLCC/view?usp=drive_link"
+        }
+      }
+    };
+
+    const DIGITAL = {
+      kiara: {
+        "1": {
+          "Hindi Reader": {
+            "Chapter 1": [{ label: "Video 1", youtubeUrl: "https://drive.google.com/file/d/1SkgNwRoTWqsVHjE9KZjBqGyKoIqOCkqK/view?usp=sharing" }],
+            "Chapter 2": [{ label: "Video 2", youtubeUrl: "https://drive.google.com/file/d/1BZ9G2U9FjQj1Y2N6WZ07IzffWSTj7zWZ/view?usp=sharing" }],
+            "Chapter 3": [{ label: "Video 3", youtubeUrl: "https://drive.google.com/file/d/1TVo47nxueC8l_PFX9cH03O6Csmc2tVhF/view?usp=drive_link" }]
+          }
+        }
+      },
+      meadows: {
+        "1": {
+          "Meadows": {
+            "My Home": [{ label: "Video", youtubeUrl: "./Chapter1MCQ.html" }],
+            "A Family": [{ label: "Video", youtubeUrl: "https://drive.google.com/file/d/1e72aEGhSilBRXFf1Z2pp5tUUcmh4uiSY/view?usp=drive_link" }],
+            "The Alphabet": [{ label: "Video", youtubeUrl: "https://drive.google.com/file/d/1ef6hoaz95e7n25Ob0Vgot1qcnu_-nhJQ/view?usp=drive_link" }],
+            "I Float My Paper": [{ label: "Video", youtubeUrl: "https://drive.google.com/file/d/1tldC2CAvsSzH9g7sjt8z5eaM6YC2DfJq/view?usp=sharing" }],
+            "A AND AN": [{ label: "Video", youtubeUrl: "https://drive.google.com/file/d/1nGPiEJjFNF-rMecvH4vg3TSu2WwJFlb0/view?usp=drive_link" }]
+          }
+        }
+      }
+    };
+
+    const ACTIVITY_LINKS = {
+      kiara: {},
+      meadows: {
+        "1": {
+          "Meadows": {
+            "My Home": [{ title: "Chapter-1 MCQ", url: "./Chapter1MCQ.html" }],
+            "A Family": [{ title: "Chapter-2 MCQ", url: "./Chapter2MCQ.html" }],
+            "The Alphabet": [{ title: "Chapter-3 MCQ", url: "./Activitys/MCQS/Chapter3MCQ.html" }],
+            "I Float My Paper": [{ title: "Chapter-4 MCQ", url: "./Activitys/MCQS/Chapter4MCQ.html" }]
+          }
+        }
+      }
+    };
+
+    const KINDER_LINKS = {
+      ukg: { videos: "", activity: "", worksheet: "" },
+      lkg: { videos: "", activity: "", worksheet: "" },
+      nursery: { videos: "", activity: "", worksheet: "" }
+    };
+
+    /* -------------------- SHOW/HIDE -------------------- */
+    const tabs = ["digital","answerkey","trm","worksheet","testpaper","contact","ukg","lkg","nursery"];
+
+    function stopVideo(){
+      const box = document.getElementById('videoBox');
+      if(box) box.style.display = 'none';
+      const frame = document.getElementById('ytFrame');
+      if(frame) frame.src = '';
+      const link = document.getElementById('openOnYt');
+      if(link) link.href = '#';
+    }
+
+    function setActive(id){
+      document.querySelectorAll('.navlinks a').forEach(a=>{
+        a.classList.toggle('active', a.getAttribute('data-tab') === id);
+      });
+    }
+
+    function hideAll(){
+      tabs.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = "none";
+      });
+      stopVideo();
+      setActive("home");
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function showTab(id){
+      tabs.forEach(x=>{
+        const el = document.getElementById(x);
+        if(el) el.style.display = "none";
+      });
+      stopVideo();
+      const target = document.getElementById(id);
+      if(target){
+        target.style.display = "block";
+        setActive(id);
+        target.scrollIntoView({behavior:'smooth', block:'start'});
+      }
+    }
+
+    function handleTab(tab){
+      if(tab === "home"){ hideAll(); return; }
+      showTab(tab);
+      if(tab === "digital") initDigital();
+      if(tab === "answerkey") initLinkPanel("answerkey","akSeries","akChips","akList");
+      if(tab === "trm") initLinkPanel("trm","trmSeries","trmChips","trmList");
+      if(tab === "worksheet") initLinkPanel("worksheet","wsSeries","wsChips","wsList");
+      if(tab === "testpaper") tpInit();
+    }
+    function openKinder(level, type){
+      const link = (KINDER_LINKS[level] && KINDER_LINKS[level][type]) ? (KINDER_LINKS[level][type] || "").trim() : "";
+      if(!link){ toast("Link not added yet"); return; }
+      window.open(link, "_blank", "noopener");
+    }
+
+    /* -------------------- GLOBAL SEARCH -------------------- */
+    function doGlobalSearch(){
+      const q = (document.getElementById('globalSearch').value || "").trim().toLowerCase();
+      if(!q){ toast("Type something to search"); return; }
+
+      const testpaperVisible = (document.getElementById('testpaper').style.display === "block");
+      if(testpaperVisible){
+        document.getElementById('tpQSearch').value = q;
+        tpApplyBankFilter();
+        toast("Filtered Test Paper questions");
+        return;
+      }
+
+      handleTab("digital");
+      setTimeout(()=>{
+        try{
+          const nodes = document.querySelectorAll('#chapterList .row .t');
+          let found = false;
+          nodes.forEach(n=>{
+            const hit = n.textContent.toLowerCase().includes(q);
+            n.style.outline = hit ? "2px solid rgba(199,255,58,.55)" : "none";
+            n.style.borderRadius = "10px";
+            if(hit && !found){
+              found = true;
+              n.scrollIntoView({behavior:"smooth", block:"center"});
+            }
+          });
+          toast(found ? "Found in Digital chapters" : "No match found (try in Test Paper)");
+        }catch(e){
+          toast("Search failed");
+        }
+      }, 250);
+    }
+
+    /* -------------------- LINK PANELS -------------------- */
+    function buildSeriesChips(container, onClick){
+      container.innerHTML = '';
+      SERIES.forEach((s, idx)=>{
+        const b = document.createElement('button');
+        b.className = idx===0 ? 'btn primary' : 'btn ghost';
+        b.textContent = s.name;
+        b.addEventListener('click', ()=>{
+          [...container.children].forEach(x=> x.className='btn ghost');
+          b.className='btn primary';
+          onClick(s.id);
+        });
+        container.appendChild(b);
+      });
+    }
+
+    function buildClassChips(container, seriesId, onClick){
+      const classes = SERIES_CLASSES[seriesId] || [];
+      container.innerHTML = '';
+      classes.forEach((cls, idx)=>{
+        const b = document.createElement('button');
+        b.className = idx===0 ? 'btn primary' : 'btn ghost';
+        b.textContent = `Class ${cls}`;
+        b.addEventListener('click', ()=>{
+          [...container.children].forEach(x=> x.className='btn ghost');
+          b.className='btn primary';
+          onClick(cls);
+        });
+        container.appendChild(b);
+      });
+      return classes[0] || null;
+    }
+
+    function renderSingleLinkRow(kind, seriesId, cls, listEl){
+      listEl.innerHTML = '';
+      const link = (LINKS[kind] && LINKS[kind][seriesId] && LINKS[kind][seriesId][cls]) ? (LINKS[kind][seriesId][cls] || "").trim() : "";
+      const seriesName = (SERIES.find(x=>x.id===seriesId)?.name) || seriesId;
+      const label = kind === 'answerkey' ? 'Answer Key' : kind === 'trm' ? 'TRM' : 'Worksheet';
+
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `
+        <div>
+          <div class="t">${label} — ${seriesName} • Class ${cls}</div>
+          <div class="s">${link ? 'Google Drive File' : 'Link not added yet'}</div>
+        </div>
+        <div class="actions">
+          <button class="pillbtn primary" ${link ? '' : 'disabled'}><span class="dot"></span> Open</button>
+        </div>
+      `;
+      row.querySelector('button').addEventListener('click', ()=>{
+        if(!link) return;
+        window.open(link, '_blank', 'noopener');
+      });
+      listEl.appendChild(row);
+    }
+
+    function initLinkPanel(kind, seriesChipId, classChipId, listId){
+      const seriesEl = document.getElementById(seriesChipId);
+      const classEl = document.getElementById(classChipId);
+      const listEl = document.getElementById(listId);
+
+      let currentSeries = SERIES[0].id;
+      buildSeriesChips(seriesEl, (sid)=>{
+        currentSeries = sid;
+        const firstCls = buildClassChips(classEl, currentSeries, (cls)=> renderSingleLinkRow(kind, currentSeries, cls, listEl));
+        if(firstCls) renderSingleLinkRow(kind, currentSeries, firstCls, listEl);
+      });
+
+      const firstCls = buildClassChips(classEl, currentSeries, (cls)=> renderSingleLinkRow(kind, currentSeries, cls, listEl));
+      if(firstCls) renderSingleLinkRow(kind, currentSeries, firstCls, listEl);
+    }
+
+    /* -------------------- DIGITAL -------------------- */
+    let currentSeries = "kiara";
+    let currentBook = "1";
+    let currentSubject = null;
+    let currentChapter = null;
+
+    let seriesChips, bookChips, chaptersWrap, subjectTabs, chapterList, bookBackBtn;
+    let videosWrap, chapBackBtn, videoListTitle, videoList;
+    let classCoverImg, subjectCoverImg;
+
+    function seriesName(id){ return (SERIES.find(x=>x.id===id)?.name) || id; }
+
+    function setClassCover(seriesId, book){
+      if(!classCoverImg) return;
+      const src = CLASS_COVERS?.[seriesId]?.[book] || "assets/Book-image.png";
+      classCoverImg.src = src;
+      classCoverImg.onerror = ()=> { classCoverImg.src = "assets/Book-image.png"; };
+    }
+    function setSubjectCover(seriesId, subject){
+      if(!subjectCoverImg) return;
+      const src = SUBJECT_COVERS?.[seriesId]?.[subject] || (CLASS_COVERS?.[seriesId]?.[currentBook] || "assets/Book-image.png");
+      subjectCoverImg.src = src;
+      subjectCoverImg.onerror = ()=> { subjectCoverImg.src = "assets/Book-image.png"; };
+    }
+
+    function getActivities(seriesId, book, subject, chapter){
+      try{
+        const arr = ACTIVITY_LINKS?.[seriesId]?.[book]?.[subject]?.[chapter];
+        return Array.isArray(arr) ? arr.filter(x=> x && x.url) : [];
+      }catch(e){ return []; }
+    }
+
+    function initDigital(){
+      seriesChips = document.getElementById('seriesChips');
+      bookChips = document.getElementById('bookChips');
+      chaptersWrap = document.getElementById('chaptersWrap');
+      subjectTabs = document.getElementById('subjectTabs');
+      chapterList = document.getElementById('chapterList');
+      bookBackBtn = document.getElementById('bookBackBtn');
+
+      videosWrap = document.getElementById('videosWrap');
+      chapBackBtn = document.getElementById('chapBackBtn');
+      videoListTitle = document.getElementById('videoListTitle');
+      videoList = document.getElementById('videoList');
+
+      classCoverImg = document.getElementById('classCoverImg');
+      subjectCoverImg = document.getElementById('subjectCoverImg');
+
+      if(!seriesChips || !bookChips || !chaptersWrap || !subjectTabs || !chapterList || !bookBackBtn || !videosWrap || !chapBackBtn || !videoListTitle || !videoList){
+        toast('Digital UI not loaded');
+        return;
+      }
+
+      chaptersWrap.style.display = 'none';
+      videosWrap.style.display = 'none';
+      stopVideo();
+
+      buildSeriesChips(seriesChips, (sid)=>{
+        currentSeries = sid;
+        currentBook = (SERIES_CLASSES[sid] || ["1"])[0];
+        currentSubject = null;
+        currentChapter = null;
+
+        const classes = SERIES_CLASSES[sid] || [];
+        bookChips.innerHTML = '';
+        classes.forEach((cls, idx)=>{
+          const b = document.createElement('button');
+          b.className = idx===0 ? 'btn primary' : 'btn ghost';
+          b.textContent = `Class ${cls}`;
+          b.addEventListener('click', ()=>{
+            [...bookChips.children].forEach(x=> x.className='btn ghost');
+            b.className='btn primary';
+            currentBook = cls;
+            currentSubject = null;
+            currentChapter = null;
+            stopVideo();
+            setClassCover(currentSeries, currentBook);
+            openChapters();
+          });
+          bookChips.appendChild(b);
+        });
+
+        setClassCover(currentSeries, currentBook);
+        openChapters();
+      });
+
+      currentSeries = SERIES[0].id;
+      currentBook = (SERIES_CLASSES[currentSeries] || ["1"])[0];
+      setClassCover(currentSeries, currentBook);
+
+      const classes = SERIES_CLASSES[currentSeries] || [];
+      bookChips.innerHTML = '';
+      classes.forEach((cls, idx)=>{
+        const b = document.createElement('button');
+        b.className = idx===0 ? 'btn primary' : 'btn ghost';
+        b.textContent = `Class ${cls}`;
+        b.addEventListener('click', ()=>{
+          [...bookChips.children].forEach(x=> x.className='btn ghost');
+          b.className='btn primary';
+          currentBook = cls;
+          currentSubject = null;
+          currentChapter = null;
+          stopVideo();
+          setClassCover(currentSeries, currentBook);
+          openChapters();
+        });
+        bookChips.appendChild(b);
+      });
+
+      openChapters();
+    }
+
+    function openChapters(){
+      chaptersWrap.style.display = 'block';
+      videosWrap.style.display = 'none';
+      stopVideo();
+
+      const bookData = (DIGITAL[currentSeries] && DIGITAL[currentSeries][currentBook]) ? DIGITAL[currentSeries][currentBook] : {};
+      const subjects = Object.keys(bookData);
+
+      subjectTabs.innerHTML = '';
+      chapterList.innerHTML = '';
+
+      if(!subjects.length){
+        chapterList.innerHTML = `<div class="card"><h4>No Data</h4><p>${seriesName(currentSeries)} • Class ${currentBook} me abhi subjects/chapters add nahi hai.</p></div>`;
+        bookBackBtn.onclick = ()=> { chaptersWrap.style.display='none'; stopVideo(); };
+        return;
+      }
+
+      subjects.forEach((sub, idx)=>{
+        const b = document.createElement('button');
+        b.className = idx===0 ? 'btn primary btn.small' : 'btn ghost btn.small';
+        b.textContent = sub;
+        b.addEventListener('click', ()=>{
+          [...subjectTabs.children].forEach(x=> x.className='btn ghost btn.small');
+          b.className='btn primary btn.small';
+          currentSubject = sub;
+          setSubjectCover(currentSeries, sub);
+          renderChapters();
+        });
+        subjectTabs.appendChild(b);
+      });
+
+      currentSubject = subjects[0];
+      setSubjectCover(currentSeries, currentSubject);
+      renderChapters();
+
+      bookBackBtn.onclick = ()=>{
+        chaptersWrap.style.display='none';
+        videosWrap.style.display='none';
+        stopVideo();
+      };
+    }
+
+    function renderChapters(){
+      const bookData = (DIGITAL[currentSeries] && DIGITAL[currentSeries][currentBook]) ? DIGITAL[currentSeries][currentBook] : {};
+      const subjectData = (bookData[currentSubject] || {});
+      const chapters = Object.keys(subjectData);
+
+      chapterList.innerHTML = '';
+      if(!chapters.length){
+        chapterList.innerHTML = `<div class="card"><h4>No Chapters</h4><p>${currentSubject} me chapters add nahi hai.</p></div>`;
+        return;
+      }
+
+      chapters.forEach(ch=>{
+        const activities = getActivities(currentSeries, currentBook, currentSubject, ch);
+
+        const row = document.createElement('div');
+        row.className = 'row';
+
+        row.innerHTML = `
+          <div>
+            <div class="t">${ch}</div>
+            <div class="s">${seriesName(currentSeries)} • Class ${currentBook} • ${currentSubject}</div>
+          </div>
+
+          <div class="actions">
+            <button class="pillbtn primary" data-act="open">
+              <span class="dot"></span> Open
+            </button>
+
+            <div class="act-dd" data-actdd="1">
+              <button class="pillbtn" type="button" data-act="activityToggle">
+                <span class="dot"></span> Activities ${activities.length ? '('+activities.length+')' : ''}
+              </button>
+              <div class="act-menu" data-act="activityMenu">
+                ${
+                  activities.length
+                    ? activities.map((a, i)=>`
+                        <div class="act-item" data-url="${encodeURIComponent(a.url)}">
+                          <div>
+                            <div>${a.title || ('Activity ' + (i+1))}</div>
+                            <div class="act-sub">Open</div>
+                          </div>
+                          <div style="opacity:.75">→</div>
+                        </div>
+                        ${i === activities.length-1 ? '' : '<div class="act-line"></div>'}
+                      `).join('')
+                    : `<div class="act-item" data-none="1">
+                         <div>
+                           <div>No activity</div>
+                           <div class="act-sub">Link not added yet</div>
+                         </div>
+                         <div style="opacity:.55">×</div>
+                       </div>`
+                }
+              </div>
+            </div>
+          </div>
+        `;
+
+        row.querySelector('[data-act="open"]').addEventListener('click', ()=>{
+          currentChapter = ch;
+          openVideos();
+        });
+
+        const actWrap = row.querySelector('[data-actdd="1"]');
+        const actBtn = row.querySelector('[data-act="activityToggle"]');
+        const actMenu = row.querySelector('[data-act="activityMenu"]');
+
+        function closeAct(){ actWrap.classList.remove('open'); }
+        function toggleAct(){
+          document.querySelectorAll('.act-dd.open').forEach(x=>{ if(x!==actWrap) x.classList.remove('open'); });
+          actWrap.classList.toggle('open');
+        }
+
+        actBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleAct(); });
+
+        actMenu.addEventListener('click', (e)=>{
+          const item = e.target.closest('.act-item');
+          if(!item) return;
+          if(item.getAttribute('data-none')){ toast("Activity link not added yet"); closeAct(); return; }
+          const url = decodeURIComponent(item.getAttribute('data-url') || "");
+          closeAct();
+          if(!url){ toast("Activity link not added yet"); return; }
+          window.open(url, "_blank", "noopener");
+        });
+
+        document.addEventListener('click', closeAct);
+        chapterList.appendChild(row);
+      });
+    }
+
+    function openVideos(){
+      videosWrap.style.display = 'block';
+      stopVideo();
+
+      const bookData = (DIGITAL[currentSeries] && DIGITAL[currentSeries][currentBook]) ? DIGITAL[currentSeries][currentBook] : {};
+      const subjectData = (bookData[currentSubject] || {});
+      const videos = (subjectData[currentChapter] || []);
+
+      videoListTitle.textContent = `${currentSubject} • ${currentChapter} — ${seriesName(currentSeries)} • Class ${currentBook}`;
+      videoList.innerHTML = '';
+
+      if(!videos.length){
+        videoList.innerHTML = `<div class="card"><h4>No Videos</h4><p>Is chapter me videos add nahi hai.</p></div>`;
+      }else{
+        videos.forEach((v,i)=>{
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `
+            <div>
+              <div class="t">${v.label || ('Video ' + (i+1))}</div>
+              <div class="s">YouTube</div>
+            </div>
+            <div class="actions">
+              <button class="pillbtn primary"><span class="dot"></span> Play</button>
+            </div>
+          `;
+          row.querySelector('button').addEventListener('click', ()=>{
+            const ytUrl = v.youtubeUrl;
+            document.getElementById('openOnYt').href = ytUrl;
+
+            const embed = buildYouTubeEmbed(ytUrl);
+            if(!embed){
+              window.open(ytUrl, '_blank', 'noopener');
+              return;
+            }
+            document.getElementById('ytFrame').src = embed;
+            document.getElementById('videoTitle').textContent = `${currentSubject} • ${currentChapter} — ${v.label || ('Video ' + (i+1))}`;
+            document.getElementById('videoBox').style.display = 'block';
+            document.getElementById('videoBox').scrollIntoView({behavior:'smooth', block:'start'});
+          });
+          videoList.appendChild(row);
+        });
+      }
+
+      chapBackBtn.onclick = ()=>{
+        videosWrap.style.display = 'none';
+        stopVideo();
+        chaptersWrap.scrollIntoView({behavior:'smooth', block:'start'});
+      };
+    }
+
+    /* -------------------- TEST PAPER DATABASE -------------------- */
+    const TP_DB = {
+      "Kiara Hindi Reader": {
+        "Class 1": {
+          "General Knowledge": [
+            {
+              chapter: "The World of Animals",
+              questions: [
+                { id:"k1", type:"MCQ", q:"Which animal is known as the king of the jungle?", opts:["Elephant","Lion","Zebra","Giraffe"], ans:"Lion", marks:1 },
+                { id:"k2", type:"MCQ", q:"Which animal has a long trunk?", opts:["Bear","Lion","Elephant","Zebra"], ans:"Elephant", marks:1 },
+                { id:"k3", type:"TF", q:"A giraffe has a long neck.", ans:"True", marks:1 },
+                { id:"k4", type:"TF", q:"Zebras have plain brown skin.", ans:"False", marks:1 },
+                { id:"k5", type:"Fill", q:"The largest land animal is the __________.", ans:"Elephant", marks:1 },
+                { id:"k6", type:"Fill", q:"The animal with black and white stripes is called a __________.", ans:"Zebra", marks:1 },
+                { id:"k7", type:"Short", q:"Name any two wild animals.", ans:"Lion and Elephant", marks:2 },
+                { id:"k8", type:"Long", q:"Write a few sentences about the elephant.", ans:"The elephant is the largest land animal. It has a long trunk and big ears. Elephants eat grass, leaves, and fruits. They need a lot of water every day and are very strong animals.", marks:4 }
+              ]
+            }
+          ]
+        }
+      },
+
+      "Meadows Semester Book": {
+        "Class 1": {
+          "Meadows": [
+            { chapter:"My Home", questions: [] },
+            { chapter:"A Family", questions: [] },
+            { chapter:"I Float My Paper", questions: [] },
+            { chapter:"The Fox and The Stork", questions: [] },
+            { chapter:"The Alphabet", questions: [] },
+            { chapter:"Know These Words", questions: [] },
+            { chapter:"Learning Basics", questions: [] },
+            { chapter:"Myself", questions: [] },
+            { chapter:"The World of Animals", questions: [] }
+          ]
+        }
+      }
+    };
+
+    (function fillMeadows(){
+      const chapters = [
+        { chapter:"My Home", questions:[
+          { id:"m1_1", type:"MCQ", q:"Which place do you live in?", opts:["School","Home","Park","Shop"], ans:"Home", marks:1 },
+          { id:"m1_2", type:"MCQ", q:"Which room is used for cooking food?", opts:["Bedroom","Kitchen","Bathroom","Garden"], ans:"Kitchen", marks:1 },
+          { id:"m1_3", type:"MCQ", q:"Which thing is used to sit?", opts:["Table","Chair","Bed","Fan"], ans:"Chair", marks:1 },
+          { id:"m1_4", type:"MCQ", q:"Which room is used for sleeping?", opts:["Kitchen","Bedroom","Bathroom","Hall"], ans:"Bedroom", marks:1 },
+          { id:"m1_5", type:"MCQ", q:"Which thing is used to light the room?", opts:["Bulb","Broom","Plate","Book"], ans:"Bulb", marks:1 },
+
+          { id:"m1_6", type:"TF", q:"We cook food in the kitchen.", ans:"True", marks:1 },
+          { id:"m1_7", type:"TF", q:"We sleep in the bathroom.", ans:"False", marks:1 },
+          { id:"m1_8", type:"TF", q:"A house has many rooms.", ans:"True", marks:1 },
+          { id:"m1_9", type:"TF", q:"We play games in the kitchen.", ans:"False", marks:1 },
+          { id:"m1_10", type:"TF", q:"We keep our books in a bookshelf.", ans:"True", marks:1 },
+
+          { id:"m1_11", type:"Fill", q:"We sleep in the __________.", ans:"bedroom", marks:1 },
+          { id:"m1_12", type:"Fill", q:"We cook food in the __________.", ans:"kitchen", marks:1 },
+          { id:"m1_13", type:"Fill", q:"We watch TV in the __________.", ans:"drawing room / living room", marks:1 },
+          { id:"m1_14", type:"Fill", q:"We take bath in the __________.", ans:"bathroom", marks:1 },
+          { id:"m1_15", type:"Fill", q:"We sit on a __________.", ans:"chair", marks:1 },
+
+          { id:"m1_16", type:"Short", q:"Where do you live?", ans:"I live in a house.", marks:2 },
+          { id:"m1_17", type:"Short", q:"Name any two rooms in a house.", ans:"Kitchen and bedroom.", marks:2 },
+          { id:"m1_18", type:"Long", q:"Write 2–3 lines about your home.", ans:"My home is a safe place. I live with my family. I love my home.", marks:4 }
+        ]},
+
+        { chapter:"A Family", questions:[
+          { id:"m2_1", type:"MCQ", q:"A family consists of:", opts:["Only friends","Parents and children","Only teachers","Only animals"], ans:"Parents and children", marks:1 },
+          { id:"m2_2", type:"MCQ", q:"Your father’s father is your:", opts:["Uncle","Grandfather","Brother","Cousin"], ans:"Grandfather", marks:1 },
+          { id:"m2_3", type:"MCQ", q:"Your mother’s mother is your:", opts:["Grandmother","Sister","Aunt","Friend"], ans:"Grandmother", marks:1 },
+          { id:"m2_4", type:"MCQ", q:"A small family is also called:", opts:["Joint family","Nuclear family","Big family","Large family"], ans:"Nuclear family", marks:1 },
+          { id:"m2_5", type:"MCQ", q:"In a joint family, we live with:", opts:["Only parents","Grandparents and relatives","Only friends","Only neighbors"], ans:"Grandparents and relatives", marks:1 },
+
+          { id:"m2_6", type:"TF", q:"A family gives us love and care.", ans:"True", marks:1 },
+          { id:"m2_7", type:"TF", q:"A joint family is very small.", ans:"False", marks:1 },
+          { id:"m2_8", type:"TF", q:"We should respect our elders.", ans:"True", marks:1 },
+          { id:"m2_9", type:"TF", q:"Grandparents are part of a family.", ans:"True", marks:1 },
+          { id:"m2_10", type:"TF", q:"We should fight with our family members.", ans:"False", marks:1 },
+
+          { id:"m2_11", type:"Fill", q:"My father’s mother is my __________.", ans:"grandmother", marks:1 },
+          { id:"m2_12", type:"Fill", q:"A family lives together in a __________.", ans:"house", marks:1 },
+          { id:"m2_13", type:"Fill", q:"We should love and __________ our family.", ans:"respect", marks:1 },
+          { id:"m2_14", type:"Fill", q:"A small family is called a __________ family.", ans:"nuclear", marks:1 },
+          { id:"m2_15", type:"Fill", q:"A big family is called a __________ family.", ans:"joint", marks:1 },
+
+          { id:"m2_16", type:"Short", q:"What is a family?", ans:"A family is a group of people who live together and care for each other.", marks:2 },
+          { id:"m2_17", type:"Short", q:"Name any two members of your family.", ans:"Mother and father.", marks:2 },
+          { id:"m2_18", type:"Long", q:"Write 2–3 lines about your family.", ans:"My family loves me. We live together and help each other. I respect my elders.", marks:4 }
+        ]}
+      ];
+
+      const tgt = TP_DB["Meadows Semester Book"]["Class 1"]["Meadows"];
+      const map = new Map(chapters.map(c=>[c.chapter, c.questions]));
+      tgt.forEach(ch=>{
+        const qs = map.get(ch.chapter);
+        if(qs) ch.questions = qs;
+      });
+    })();
+
+    /* -------------------- TEST PAPER APP -------------------- */
+    let tpSelected = [];
+    let tpCurrentChapterObj = null;
+    let tpCurrentBankRaw = [];
+    let tpCurrentBankView = [];
+
+    function tpInit(){
+      const bookSel = document.getElementById('tpBookSel');
+      const classSel = document.getElementById('tpClassSel');
+      const subSel = document.getElementById('tpSubSel');
+
+      const books = Object.keys(TP_DB);
+      bookSel.innerHTML = books.map(b=>`<option>${b}</option>`).join('');
+
+      const loadClasses = ()=>{
+        const b = bookSel.value;
+        const classes = Object.keys(TP_DB[b] || {});
+        classSel.innerHTML = classes.map(c=>`<option>${c}</option>`).join('');
+        loadSubjects();
+      };
+
+      const loadSubjects = ()=>{
+        const b = bookSel.value;
+        const c = classSel.value;
+        const subjects = Object.keys((TP_DB[b]||{})[c] || {});
+        subSel.innerHTML = subjects.map(s=>`<option>${s}</option>`).join('');
+        document.getElementById('tpPaperSubject').textContent = subSel.value || "Subject";
+        tpLoadChapters();
+      };
+
+      bookSel.onchange = loadClasses;
+      classSel.onchange = loadSubjects;
+      subSel.onchange = ()=>{
+        document.getElementById('tpPaperSubject').textContent = subSel.value || "Subject";
+        tpLoadChapters();
+      };
+
+      document.getElementById('tpPreset').onchange = ()=>{
+        document.getElementById('tpRange').value = document.getElementById('tpPreset').value;
+      };
+
+      document.getElementById('tpQSearch').oninput = ()=> tpApplyBankFilter(true);
+      document.getElementById('tpTypeFilter').onchange = ()=> tpApplyBankFilter(true);
+
+      loadClasses();
+      tpClear();
+      tpTeacherOff();
+      tpMaskOff();
+
+      setTimeout(tpFitPaper, 150);
+      window.addEventListener('resize', ()=> setTimeout(tpFitPaper, 100));
+    }
+
+    function tpTeacherOff(){
+      document.body.classList.remove('teacher-mode');
+      document.getElementById('tpTeacherBtn').textContent = "TEACHER MODE: OFF";
+    }
+    function tpToggleTeacher(){
+      document.body.classList.toggle('teacher-mode');
+      const on = document.body.classList.contains('teacher-mode');
+      document.getElementById('tpTeacherBtn').textContent = on ? "TEACHER MODE: ON" : "TEACHER MODE: OFF";
+    }
+
+    /* MASKING (fixed): when ON, answers stay hidden even if Teacher Mode ON */
+    function tpMaskOff(){
+      document.body.classList.remove('mask-mode');
+      document.getElementById('tpMaskBtn').textContent = "MASKING: OFF";
+    }
+    function tpToggleMask(){
+      document.body.classList.toggle('mask-mode');
+      const on = document.body.classList.contains('mask-mode');
+      document.getElementById('tpMaskBtn').textContent = on ? "MASKING: ON" : "MASKING: OFF";
+    }
+
+    function tpGetScope(){
+      const b = document.getElementById('tpBookSel').value;
+      const c = document.getElementById('tpClassSel').value;
+      const s = document.getElementById('tpSubSel').value;
+      const chapters = (((TP_DB[b]||{})[c]||{})[s] || []);
+      return {b,c,s,chapters};
+    }
+
+    function tpLoadChapters(){
+      const wrap = document.getElementById('tpChapters');
+      wrap.innerHTML = '';
+      const {chapters} = tpGetScope();
+
+      if(!chapters.length){
+        wrap.innerHTML = `<div class="tp-item"><b>No chapters</b><div class="sub">Data not added yet</div></div>`;
+        document.getElementById('tpBank').innerHTML = '';
+        return;
+      }
+
+      chapters.forEach((ch, idx)=>{
+        const div = document.createElement('div');
+        div.className = 'tp-item';
+        div.innerHTML = `<b>${idx+1}. ${ch.chapter}</b><div class="sub">${(ch.questions||[]).length} questions</div>`;
+        div.onclick = ()=> tpLoadBank(ch);
+        wrap.appendChild(div);
+      });
+
+      tpLoadBank(chapters[0]);
+    }
+
+    function tpLoadBank(chapterObj){
+      tpCurrentChapterObj = chapterObj;
+      tpCurrentBankRaw = Array.isArray(chapterObj.questions) ? chapterObj.questions.slice() : [];
+      document.getElementById('tpBankTitle').textContent = `Pick Questions • ${chapterObj.chapter}`;
+      document.getElementById('tpQSearch').value = "";
+      document.getElementById('tpTypeFilter').value = "";
+      tpApplyBankFilter();
+    }
+
+    function tpApplyBankFilter(silent=false){
+      const q = (document.getElementById('tpQSearch').value || "").trim().toLowerCase();
+      const type = (document.getElementById('tpTypeFilter').value || "").trim();
+
+      tpCurrentBankView = tpCurrentBankRaw.filter(item=>{
+        const hitQ = !q ? true : (item.q || "").toLowerCase().includes(q);
+        const hitT = !type ? true : item.type === type;
+        return hitQ && hitT;
+      });
+
+      const bank = document.getElementById('tpBank');
+      bank.innerHTML = '';
+
+      if(!tpCurrentBankView.length){
+        bank.innerHTML = `<div class="tp-item"><b>No match</b><div class="sub">Try different search / type.</div></div>`;
+        if(!silent) toast("No question found");
+        return;
+      }
+
+      tpCurrentBankView.forEach(qItem=>{
+        const d = document.createElement('div');
+        d.className = 'tp-item';
+        d.innerHTML = `<b>${qItem.type}</b>: ${qItem.q}<div class="sub">Marks: ${qItem.marks} • Click to add</div>`;
+        d.onclick = ()=>{
+          if(!tpSelected.find(x=>x.id===qItem.id)){
+            tpSelected.push({...qItem, marks: toIntMarks(qItem.marks)});
+            tpRenderPaper();
+          }
+        };
+        bank.appendChild(d);
+      });
+
+      if(!silent) toast("Bank updated");
+    }
+
+    function toIntMarks(x){
+      const n = parseInt(x, 10);
+      if(Number.isFinite(n) && n > 0) return n;
+      return 1;
+    }
+
+    function tpMarksOptions(selected){
+      const max = 10;
+      let html = '';
+      for(let i=1;i<=max;i++){
+        html += `<option value="${i}" ${i===selected?'selected':''}>${i}</option>`;
+      }
+      return html;
+    }
+
+    function tpRenderPaper(){
+      const body = document.getElementById('tpPaperBody');
+      body.innerHTML = '';
+      let total = 0, count = 1;
+      const order = ["MCQ","TF","Fill","Short","Long"];
+
+      order.forEach(sec=>{
+        const qs = tpSelected.filter(x=>x.type===sec);
+        if(!qs.length) return;
+
+        const secDiv = document.createElement('div');
+        secDiv.innerHTML = `<div class="tp-sec-head">SECTION: ${sec}</div>`;
+
+        qs.forEach(item=>{
+          item.marks = toIntMarks(item.marks);
+          total += item.marks;
+
+          const qIdx = tpSelected.indexOf(item);
+
+          const qDiv = document.createElement('div');
+          qDiv.className = 'tp-q';
+          qDiv.innerHTML = `
+            <div class="tp-del" title="Remove" onclick="tpSelected.splice(${qIdx},1); tpRenderPaper()">×</div>
+
+            <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
+              <div style="flex:1">
+                <b>${count++}.</b> ${item.q}
+                ${item.type==='TF' ? `<span class="tp-inline-box"></span>` : ``}
+              </div>
+
+              <div style="min-width:120px; text-align:right;">
+                [ Marks:
+                  <select class="tp-marksSel" onchange="tpSelected[${qIdx}].marks = parseInt(this.value,10); tpRenderPaper()">
+                    ${tpMarksOptions(item.marks)}
+                  </select>
+                ]
+              </div>
+            </div>
+
+            ${item.type==='MCQ'
+              ? `<div class="tp-opts">${(item.opts||[]).map((o,i)=>`<div>${String.fromCharCode(97+i)}) ${o} <span class="tp-inline-box"></span></div>`).join('')}</div>`
+              : ``}
+
+            <div class="tp-ans">✅ Ans: ${item.ans || ""}</div>
+          `;
+          secDiv.appendChild(qDiv);
+        });
+
+        body.appendChild(secDiv);
+      });
+
+      document.getElementById('tpTotal').textContent = total;
+
+      try{ new Sortable(body, { animation: 150, onEnd: tpRenderPaper }); }catch(e){}
+
+      tpFitPaper();
+    }
+
+    function tpClear(){ tpSelected = []; tpRenderPaper(); }
+
+    function tpGenerateFromRange(){
+      const r = (document.getElementById('tpRange').value || "").trim();
+      if(!r){ toast("Enter range like 1-1"); return; }
+
+      const {chapters} = tpGetScope();
+      const parts = r.split('-').map(x=>parseInt(x,10)).filter(x=>Number.isFinite(x));
+      if(!parts.length){ toast("Invalid range"); return; }
+
+      const s = (parts[0]||1)-1;
+      const e = (parts[1]||parts[0]||1)-1;
+
+      for(let i=s;i<=e;i++){
+        const ch = chapters[i];
+        if(!ch) continue;
+        (ch.questions||[]).forEach(q=>{
+          if(!tpSelected.find(x=>x.id===q.id)) tpSelected.push({...q, marks: toIntMarks(q.marks)});
+        });
+      }
+      tpRenderPaper();
+      toast("Generated from range");
+    }
+
+    /* tpFitPaper (RESPONSIVE FIX): replaced only this function */
+    function tpFitPaper(){
+      const wrap = document.getElementById('tpPaperWrap');
+      const stage = document.getElementById('tpPaperStage');
+      const paper = document.getElementById('tpPaper');
+      if(!wrap || !stage || !paper) return;
+
+      stage.style.transform = "scale(1)";
+
+      const available = wrap.clientWidth - 28;
+
+      const paperWidthPx = paper.offsetWidth || paper.getBoundingClientRect().width;
+      const scale = Math.min(1, available / paperWidthPx);
+
+      stage.style.transform = `scale(${scale})`;
+
+      const paperHeightPx = paper.offsetHeight || paper.getBoundingClientRect().height;
+      stage.style.width = (paperWidthPx * scale) + "px";
+      stage.style.height = (paperHeightPx * scale) + "px";
+    }
+
+    async function tpSavePDF(){
+      const btn = document.getElementById('tpPdfBtn');
+      const old = btn.textContent;
+      btn.textContent = "...";
+
+      const wasTeacher = document.body.classList.contains('teacher-mode');
+      const wasMask = document.body.classList.contains('mask-mode');
+
+      /* Masking fix: PDF export always hides answers */
+      document.body.classList.remove('teacher-mode');
+      document.body.classList.add('mask-mode');
+
+      const stage = document.getElementById('tpPaperStage');
+      const oldTransform = stage.style.transform;
+      stage.style.transform = "scale(1)";
+
+      const paper = document.getElementById('tpPaper');
+      const canvas = await html2canvas(paper, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      pdf.save("Exam_Paper.pdf");
+
+      stage.style.transform = oldTransform;
+      tpFitPaper();
+
+      if(wasTeacher) document.body.classList.add('teacher-mode');
+      if(!wasMask) document.body.classList.remove('mask-mode');
+
+      btn.textContent = old;
+    }
+
+    function tpSaveWord(){
+      const header = "<html><head><meta charset='utf-8'></head><body>";
+      const content = document.getElementById('tpPaper').cloneNode(true);
+      /* Masking fix: WORD export always hides answers */
+      content.querySelectorAll('.tp-del, .tp-ans, select').forEach(el => el.remove());
+      const blob = new Blob(['\ufeff', header + content.innerHTML + "</body></html>"], { type: 'application/msword' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'Exam_Paper.doc';
+      link.click();
+    }
+  </script>
+</body>
+</html>
